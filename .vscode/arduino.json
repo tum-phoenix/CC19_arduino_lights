@@ -1,0 +1,5 @@
+{
+    "port": "COM22",
+    "programmer": "AVRISP mkII",
+    "board": "arduino:avr:leonardo"
+}
