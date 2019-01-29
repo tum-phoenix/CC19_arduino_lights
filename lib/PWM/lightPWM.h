@@ -34,7 +34,7 @@
  *    -> PWM_ODD_PARITY1 is allways 0
  */
 
-volatile uint32_t blink_start[3] = {0, 0, 0};
+volatile uint32_t command_start_times[4] = {0, 0, 0, 0};
 
 void setup_PWM();
 uint16_t get_pwm_commands(uint8_t *tar_array);
@@ -108,15 +108,19 @@ void ISR_function(void)
     bitwise_command = (uint8_t)(cur_pwm_pulse >> 2); // dicard the parity for now
     if ((bitwise_command & 1) && !(bitwise_command_prev & 1))
     {
-      blink_start[0] = cur_pwm_micros;
+      command_start_times[0] = cur_pwm_micros;
     }
     if (((bitwise_command >> 1) & 1) && !((bitwise_command_prev >> 1) & 1))
     {
-      blink_start[1] = cur_pwm_micros;
+      command_start_times[1] = cur_pwm_micros;
     }
     if (((bitwise_command >> 3) & 1) && !((bitwise_command_prev >> 3) & 1))
     {
-      blink_start[2] = cur_pwm_micros;
+      command_start_times[2] = cur_pwm_micros;
+    }
+    if (((bitwise_command >> 4) & 1) && !((bitwise_command_prev >> 4) & 1))
+    {
+      command_start_times[3] = cur_pwm_micros;
     }
     uint8_t par_count = 0;
     for (uint8_t i = 0; i < COM_NUM; i++)

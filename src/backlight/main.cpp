@@ -43,10 +43,10 @@ uint16_t lost_frames = 0;
  *    // go to blink routine
  *  }
  * 
- * the time, when blinking started the last time can be obtained by calling "blink_start" array with the same enum
- * from "lightPWM.h": uint32_t blink_start[2];
+ * the time, when blinking started the last time can be obtained by calling "command_start_times" array with the same enum
+ * from "lightPWM.h": uint32_t command_start_times[2];
  * 
- *  e.g. start_time_left = blink_start[PWM_BLINK_LEFT];
+ *  e.g. start_time_left = command_start_times[PWM_BLINK_LEFT];
  * 
  * functions to call:
  *  setup_PWM()
@@ -56,6 +56,8 @@ uint16_t lost_frames = 0;
 */
 
 uint8_t red_intensity = 255;
+uint8_t dimmed_light = 0;
+uint32_t last_breath_time = 0;
 
 void setup()
 {
@@ -109,22 +111,6 @@ void loop()
 #if !DEBUG
     lost_frames = get_pwm_commands(commands);
 #endif
-
-#define BRAKE_THRESHOLD 30
-    static uint8_t brake_on = 0;
-    uint8_t brake_show = 0;
-    if (commands[PWM_BRAKE] && brake_on < BRAKE_THRESHOLD * 2)
-    {
-      brake_on++;
-    }
-    else if (!commands[PWM_BRAKE] && brake_on > 0)
-    {
-      brake_on--;
-    }
-    if (brake_on > BRAKE_THRESHOLD)
-    {
-      brake_show = 1;
-    }
     if (commands[PWM_ARM])
     {
       for (int i = 0; i < NUM_LEDS_PER_STRIP; i++)
@@ -132,12 +118,14 @@ void loop()
         leds[LEFT][i].setRGB(red_intensity, 0, 0);
         leds[RIGHT][i].setRGB(red_intensity, 0, 0);
       }
+      dimmed_light = red_intensity;
+      last_breath_time = 0;
     }
     else
     {
       breath_leds();
     }
-    if (brake_show)
+    if (commands[PWM_BRAKE])
     {
       for (int i = 0; i < 4; i++)
       {
@@ -157,7 +145,7 @@ void loop()
     }
     if (commands[PWM_BLINK_LEFT])
     {
-      if ((micros() - blink_start[0]) % 500000 < 250000)
+      if ((micros() - command_start_times[0]) % 500000 < 250000)
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
@@ -174,7 +162,7 @@ void loop()
     }
     if (commands[PWM_BLINK_RIGHT])
     {
-      if ((micros() - blink_start[1]) % 500000 < 250000)
+      if ((micros() - command_start_times[1]) % 500000 < 250000)
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
@@ -191,7 +179,7 @@ void loop()
     }
     if (commands[PWM_BLINK_LEFT] && commands[PWM_BLINK_RIGHT])
     {
-      if ((micros() - blink_start[0]) % 500000 < 250000)
+      if ((micros() - command_start_times[0]) % 500000 < 250000)
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
@@ -210,15 +198,29 @@ void loop()
     }
     if (commands[PWM_RC_LED])
     {
-      if ((micros() - blink_start[2]) % 1000000 < 500000)
+      if ((micros() - command_start_times[2]) % 1000000 < 500000)
       {
         leds[TOP][0].setRGB(0, 0, 255);
+        for (uint8_t i = 11; i < 13; i++)
+        {
+          leds[LEFT][i].setRGB(0, 0, 255);
+          leds[RIGHT][i].setRGB(0, 0, 255);
+        }
+      }
+      else
+      {
+        leds[TOP][0].setRGB(0, 0, 0);
+        for (uint8_t i = 11; i < 13; i++)
+        {
+          leds[LEFT][i].setRGB(0, 0, 0);
+          leds[RIGHT][i].setRGB(0, 0, 0);
+        }
       }
     }
     FastLED.show();
 #if DEBUG
     delay(20);
-#else 
+#else
     got_pulse = 0;
 #endif
   }
@@ -226,28 +228,26 @@ void loop()
 
 void breath_leds()
 {
-  static int brightness = red_intensity;
   static int incrementer = 1;
-  static uint32_t last_mil = 0;
-  uint32_t cur_mil = millis();
-  if (cur_mil - last_mil >= 20)
+  uint32_t cur_breath_time = micros() - command_start_times[3];
+  if (cur_breath_time - last_breath_time >= 20000)
   {
-    if (brightness <= 5)
+    if (dimmed_light <= 5)
     {
       incrementer = 1;
     }
-    else if (brightness >= red_intensity)
+    else if (dimmed_light >= red_intensity)
     {
       incrementer = -1;
     }
 
-    brightness += incrementer;
-    //Serial.println(brightness);
+    dimmed_light += incrementer;
+    //Serial.println(dimmed_light);
     for (int i = 0; i < NUM_LEDS_PER_STRIP; i++)
     {
-      leds[LEFT][i].setRGB(brightness, 0, 0);
-      leds[RIGHT][i].setRGB(brightness, 0, 0);
+      leds[LEFT][i].setRGB(dimmed_light, 0, 0);
+      leds[RIGHT][i].setRGB(dimmed_light, 0, 0);
     }
-    last_mil = cur_mil;
+    last_breath_time = cur_breath_time;
   }
 }

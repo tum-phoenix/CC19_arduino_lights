@@ -67,6 +67,8 @@ uint8_t commands[COM_ARRAY_SIZE] = {1, 1, 0, 1, 1};
 uint16_t lost_frames = 0;
 
 uint8_t RGBintensity[3] = {255, 255, 255};
+uint8_t dimmed_light[3] = {RGBintensity[0], RGBintensity[1], RGBintensity[2]};
+uint32_t last_breath_time = 0;
 
 void setup()
 {
@@ -142,6 +144,8 @@ void loop()
         leds[RT][i].setRGB(RGBintensity[0], RGBintensity[1], RGBintensity[2]);
         leds[RB][i].setRGB(RGBintensity[0], RGBintensity[1], RGBintensity[2]);
       }
+      dimmed_light[0] = RGBintensity[0];
+      last_breath_time = 0;
     }
     else
     {
@@ -150,7 +154,7 @@ void loop()
     }
     if (commands[PWM_BLINK_LEFT])
     {
-      if ((micros() - blink_start[0]) % 500000 < 250000)
+      if ((micros() - command_start_times[0]) % 500000 < 250000)
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
@@ -167,7 +171,7 @@ void loop()
     }
     if (commands[PWM_BLINK_RIGHT])
     {
-      if ((micros() - blink_start[1]) % 500000 < 250000)
+      if ((micros() - command_start_times[1]) % 500000 < 250000)
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
@@ -184,7 +188,7 @@ void loop()
     }
     if (commands[PWM_BLINK_LEFT] && commands[PWM_BLINK_RIGHT])
     {
-      if ((micros() - blink_start[0]) % 500000 < 250000)
+      if ((micros() - command_start_times[0]) % 500000 < 250000)
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
@@ -203,7 +207,7 @@ void loop()
     }
     if (commands[PWM_RC_LED])
     {
-      if ((micros() - blink_start[2]) % 1000000 < 500000 && commands[PWM_ARM])
+      if ((micros() - command_start_times[2]) % 1000000 < 500000 && commands[PWM_ARM])
       {
         leds[LT][7].setRGB(0, 0, 0);
         leds[RT][7].setRGB(0, 0, 0);
@@ -233,32 +237,30 @@ void loop()
 
 void breath_leds()
 {
-  static int brightness[3] = {RGBintensity[0], RGBintensity[1], RGBintensity[2]};
   static int incrementer = 1;
-  static uint32_t last_mil = 0;
-  uint32_t cur_mil = millis();
-  if (cur_mil - last_mil >= 20)
+  uint32_t cur_breath_time = micros() - command_start_times[3];
+  if (cur_breath_time - last_breath_time >= 20000)
   {
-    if (brightness[0] <= 5)
+    if (dimmed_light[0] <= 5)
     {
       incrementer = 1;
     }
-    else if (brightness[0] >= RGBintensity[0])
+    else if (dimmed_light[0] >= RGBintensity[0])
     {
       incrementer = -1;
     }
 
-    brightness[0] += incrementer;
-    brightness[1] += incrementer;
-    brightness[2] += incrementer;
-    Serial.println(brightness[2]);
+    dimmed_light[0] += incrementer;
+    dimmed_light[1] += incrementer;
+    dimmed_light[2] += incrementer;
+    //Serial.println(dimmed_light[2]);
     for (int i = 0; i < NUM_LEDS_PER_STRIP; i++)
     {
-      leds[LT][i].setRGB(brightness[0], brightness[1], brightness[2]);
-      leds[LB][i].setRGB(brightness[0], brightness[1], brightness[2]);
-      leds[RT][i].setRGB(brightness[0], brightness[1], brightness[2]);
-      leds[RB][i].setRGB(brightness[0], brightness[1], brightness[2]);
+      leds[LT][i].setRGB(dimmed_light[0], dimmed_light[1], dimmed_light[2]);
+      leds[LB][i].setRGB(dimmed_light[0], dimmed_light[1], dimmed_light[2]);
+      leds[RT][i].setRGB(dimmed_light[0], dimmed_light[1], dimmed_light[2]);
+      leds[RB][i].setRGB(dimmed_light[0], dimmed_light[1], dimmed_light[2]);
     }
-    last_mil = cur_mil;
+    last_breath_time = cur_breath_time;
   }
 }
