@@ -15,8 +15,8 @@ CRGB leds[NUM_STRIPS][NUM_LEDS_PER_STRIP];
 #define TOP 2
 
 // pin definitions
-#define LEFT_PIN A0
-#define RIGHT_PIN A1
+#define LEFT_PIN A1
+#define RIGHT_PIN A0
 #define TOP_PIN A2
 
 #define BLINK_COLOR 255, 70, 0
@@ -102,6 +102,10 @@ void setup()
     FastLED.show();
     delay(2);
   }
+  
+  dimmed_light = red_intensity;
+
+  while (millis() < 2500) ;
 }
 
 void loop()
@@ -196,12 +200,12 @@ void loop()
         }
       }
     }
-    if (commands[PWM_RC_LED])
+    if (commands[PWM_RC_LED] && commands[PWM_ARM])
     {
       if ((micros() - command_start_times[2]) % 1000000 < 500000)
       {
         leds[TOP][0].setRGB(0, 0, 255);
-        for (uint8_t i = 11; i < 13; i++)
+        for (uint8_t i = 11; i < 12; i++)
         {
           leds[LEFT][i].setRGB(0, 0, 255);
           leds[RIGHT][i].setRGB(0, 0, 255);
@@ -210,7 +214,7 @@ void loop()
       else
       {
         leds[TOP][0].setRGB(0, 0, 0);
-        for (uint8_t i = 11; i < 13; i++)
+        for (uint8_t i = 11; i < 12; i++)
         {
           leds[LEFT][i].setRGB(0, 0, 0);
           leds[RIGHT][i].setRGB(0, 0, 0);
