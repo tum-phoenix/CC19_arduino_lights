@@ -91,7 +91,7 @@ void setup()
     leds[RB][i].setRGB(0, 0, 0);
   }
   FastLED.show();
-  delay(500);
+  delay(100);
 
   // code for the welcome swipe
   for (int32_t j = 0; j <= 255 * NUM_LEDS_PER_STRIP; j += 9)
@@ -123,7 +123,11 @@ void setup()
     FastLED.show();
     delay(2);
   }
-  delay(500);
+
+  dimmed_light[0] = RGBintensity[0];
+  dimmed_light[1] = RGBintensity[1];
+  dimmed_light[2] = RGBintensity[2];
+  while (millis() < 2500) ;
 }
 
 void loop()
@@ -145,6 +149,8 @@ void loop()
         leds[RB][i].setRGB(RGBintensity[0], RGBintensity[1], RGBintensity[2]);
       }
       dimmed_light[0] = RGBintensity[0];
+      dimmed_light[1] = RGBintensity[1];
+      dimmed_light[2] = RGBintensity[2];
       last_breath_time = 0;
     }
     else
@@ -205,9 +211,9 @@ void loop()
         }
       }
     }
-    if (commands[PWM_RC_LED])
+    if (commands[PWM_RC_LED] && commands[PWM_ARM])
     {
-      if ((micros() - command_start_times[2]) % 1000000 < 500000 && commands[PWM_ARM])
+      if ((micros() - command_start_times[2]) % 1000000 < 500000)
       {
         leds[LT][7].setRGB(0, 0, 0);
         leds[RT][7].setRGB(0, 0, 0);
