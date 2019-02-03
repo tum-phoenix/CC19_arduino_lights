@@ -44,7 +44,7 @@ uint16_t lost_frames = 0;
  *  }
  * 
  * the time, when blinking started the last time can be obtained by calling "command_start_times" array with the same enum
- * from "lightPWM.h": uint32_t command_start_times[2];
+ * from "lightPWM.h": uint32_t command_start_times[5];
  * 
  *  e.g. start_time_left = command_start_times[PWM_BLINK_LEFT];
  * 
@@ -117,6 +117,7 @@ void loop()
 #endif
     if (commands[PWM_ARM])
     {
+      leds[TOP][0].setRGB(0, 0, 0);
       for (int i = 0; i < NUM_LEDS_PER_STRIP; i++)
       {
         leds[LEFT][i].setRGB(red_intensity, 0, 0);
@@ -129,7 +130,7 @@ void loop()
     {
       breath_leds();
     }
-    if (commands[PWM_BRAKE])
+    if (commands[PWM_BRAKE] && command_start_times[PWM_BRAKE] >= 35)
     {
       for (int i = 0; i < 4; i++)
       {
@@ -149,7 +150,7 @@ void loop()
     }
     if (commands[PWM_BLINK_LEFT])
     {
-      if ((micros() - command_start_times[0]) % 500000 < 250000)
+      if ((millis() - command_start_times[PWM_BLINK_LEFT]) % 500 < 250)
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
@@ -166,7 +167,7 @@ void loop()
     }
     if (commands[PWM_BLINK_RIGHT])
     {
-      if ((micros() - command_start_times[1]) % 500000 < 250000)
+      if ((millis() - command_start_times[PWM_BLINK_RIGHT]) % 500 < 250)
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
@@ -183,7 +184,7 @@ void loop()
     }
     if (commands[PWM_BLINK_LEFT] && commands[PWM_BLINK_RIGHT])
     {
-      if ((micros() - command_start_times[0]) % 500000 < 250000)
+      if ((millis() - command_start_times[PWM_BLINK_LEFT]) % 500 < 250)
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
@@ -202,47 +203,52 @@ void loop()
     }
     if (commands[PWM_RC_LED] && commands[PWM_ARM])
     {
-      if ((micros() - command_start_times[2]) % 1000000 < 500000)
+      if ((millis() - command_start_times[PWM_RC_LED]) % 1000 < 500)
       {
         leds[TOP][0].setRGB(0, 0, 255);
+        /*
         for (uint8_t i = 11; i < 12; i++)
         {
           leds[LEFT][i].setRGB(0, 0, 255);
           leds[RIGHT][i].setRGB(0, 0, 255);
         }
+        */
       }
       else
       {
         leds[TOP][0].setRGB(0, 0, 0);
+        /*
         for (uint8_t i = 11; i < 12; i++)
         {
           leds[LEFT][i].setRGB(0, 0, 0);
           leds[RIGHT][i].setRGB(0, 0, 0);
         }
+        */
       }
     }
-    FastLED.show();
 #if DEBUG
     delay(20);
 #else
     got_pulse = 0;
+    while (micros() - cur_pwm_micros < 3000);
 #endif
+    FastLED.show();
   }
 }
 
 void breath_leds()
 {
-  static int incrementer = 1;
-  uint32_t cur_breath_time = micros() - command_start_times[3];
-  if (cur_breath_time - last_breath_time >= 20000)
+  static int incrementer = 5;
+  uint32_t cur_breath_time = millis() - command_start_times[PWM_ARM];
+  if (cur_breath_time - last_breath_time >= 100)
   {
-    if (dimmed_light <= 5)
+    if (dimmed_light <= 10)
     {
-      incrementer = 1;
+      incrementer = 5;
     }
     else if (dimmed_light >= red_intensity)
     {
-      incrementer = -1;
+      incrementer = -5;
     }
 
     dimmed_light += incrementer;

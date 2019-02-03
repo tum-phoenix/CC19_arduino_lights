@@ -160,7 +160,7 @@ void loop()
     }
     if (commands[PWM_BLINK_LEFT])
     {
-      if ((micros() - command_start_times[0]) % 500000 < 250000)
+      if ((millis() - command_start_times[0]) % 500 < 250)
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
@@ -177,7 +177,7 @@ void loop()
     }
     if (commands[PWM_BLINK_RIGHT])
     {
-      if ((micros() - command_start_times[1]) % 500000 < 250000)
+      if ((millis() - command_start_times[1]) % 500 < 250)
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
@@ -194,7 +194,7 @@ void loop()
     }
     if (commands[PWM_BLINK_LEFT] && commands[PWM_BLINK_RIGHT])
     {
-      if ((micros() - command_start_times[0]) % 500000 < 250000)
+      if ((millis() - command_start_times[0]) % 500 < 250)
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
@@ -211,9 +211,10 @@ void loop()
         }
       }
     }
+    /*
     if (commands[PWM_RC_LED] && commands[PWM_ARM])
     {
-      if ((micros() - command_start_times[2]) % 1000000 < 500000)
+      if ((millis() - command_start_times[2]) % 1000 < 500)
       {
         leds[LT][7].setRGB(0, 0, 0);
         leds[RT][7].setRGB(0, 0, 0);
@@ -232,28 +233,30 @@ void loop()
         }
       }
     }
-    FastLED.show();
+    */
 #if DEBUG
     delay(20);
 #else
     got_pulse = 0;
+    while (micros() - cur_pwm_micros < 3000);
 #endif
+    FastLED.show();
   }
 }
 
 void breath_leds()
 {
-  static int incrementer = 1;
-  uint32_t cur_breath_time = micros() - command_start_times[3];
-  if (cur_breath_time - last_breath_time >= 20000)
+  static int incrementer = 5;
+  uint32_t cur_breath_time = millis() - command_start_times[3];
+  if (cur_breath_time - last_breath_time >= 100)
   {
-    if (dimmed_light[0] <= 5)
+    if (dimmed_light[0] <= 10)
     {
-      incrementer = 1;
+      incrementer = 5;
     }
     else if (dimmed_light[0] >= RGBintensity[0])
     {
-      incrementer = -1;
+      incrementer = -5;
     }
 
     dimmed_light[0] += incrementer;
