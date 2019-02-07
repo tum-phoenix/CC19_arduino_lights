@@ -74,6 +74,7 @@ void setup()
   {
     leds[LEFT][i].setRGB(0, 0, 0);
     leds[RIGHT][i].setRGB(0, 0, 0);
+    leds[TOP][i].setRGB(0, 0, 0);
   }
   FastLED.show();
   delay(500);
@@ -91,7 +92,7 @@ void setup()
   }
 
   // reduce brightness a little for more pleasant look
-  for (uint8_t j = 255; j >= 60; j--)
+  for (uint8_t j = 255; j >= 30; j--)
   {
     red_intensity = j;
     for (int i = 0; i < NUM_LEDS_PER_STRIP; i++)
@@ -115,9 +116,9 @@ void loop()
 #if !DEBUG
     lost_frames = get_pwm_commands(commands);
 #endif
+    leds[TOP][0].setRGB(0, 0, 0);
     if (commands[PWM_ARM])
     {
-      leds[TOP][0].setRGB(0, 0, 0);
       for (int i = 0; i < NUM_LEDS_PER_STRIP; i++)
       {
         leds[LEFT][i].setRGB(red_intensity, 0, 0);
@@ -132,12 +133,12 @@ void loop()
     }
     if (commands[PWM_BRAKE] && command_start_times[PWM_BRAKE] >= 35)
     {
-      for (int i = 0; i < 4; i++)
+      for (int i = 0; i < 3; i++)
       {
         leds[LEFT][i].setRGB(255, 0, 0);
         leds[RIGHT][i].setRGB(255, 0, 0);
       }
-      for (int i = 4; i < 14; i++)
+      for (int i = 3; i < 14; i++)
       {
         leds[LEFT][i].setRGB(0, 0, 0);
         leds[RIGHT][i].setRGB(0, 0, 0);
@@ -238,17 +239,17 @@ void loop()
 
 void breath_leds()
 {
-  static int incrementer = 5;
+  static int incrementer = 1;
   uint32_t cur_breath_time = millis() - command_start_times[PWM_ARM];
-  if (cur_breath_time - last_breath_time >= 100)
+  if (cur_breath_time - last_breath_time >= 15)
   {
-    if (dimmed_light <= 10)
+    if (dimmed_light <= 5)
     {
-      incrementer = 5;
+      incrementer = 1;
     }
     else if (dimmed_light >= red_intensity)
     {
-      incrementer = -5;
+      incrementer = -1;
     }
 
     dimmed_light += incrementer;
@@ -258,6 +259,7 @@ void breath_leds()
       leds[LEFT][i].setRGB(dimmed_light, 0, 0);
       leds[RIGHT][i].setRGB(dimmed_light, 0, 0);
     }
+    Leds[TOP][0] = setRGB(0, map(dimmed_light, 5, 30, 10, 255), 0)
     last_breath_time = cur_breath_time;
   }
 }

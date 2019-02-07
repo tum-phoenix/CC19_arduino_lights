@@ -22,8 +22,8 @@ void breath_leds();
 #define RB_PIN A1
 
 #define BLINK_COLOR 255, 100, 0
-#define INNER_BLINK_LED 3
-#define OUTER_BLINK_LED 9
+#define INNER_BLINK_LED 7
+#define OUTER_BLINK_LED 10
 /*
  *
  * 
@@ -63,7 +63,7 @@ enum com_order
   COM_ARRAY_SIZE
 };
 
-uint8_t commands[COM_ARRAY_SIZE] = {1, 1, 0, 1, 1};
+uint8_t commands[COM_ARRAY_SIZE] = {0, 0, 0, 1, 0};
 uint16_t lost_frames = 0;
 
 uint8_t RGBintensity[3] = {255, 255, 255};
@@ -164,14 +164,14 @@ void loop()
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
-          leds[LB][i].setRGB(BLINK_COLOR);
+          leds[LT][i].setRGB(BLINK_COLOR);
         }
       }
       else
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
-          leds[LB][i].setRGB(0, 0, 0);
+          leds[LT][i].setRGB(0, 0, 0);
         }
       }
     }
@@ -181,14 +181,14 @@ void loop()
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
-          leds[RB][i].setRGB(BLINK_COLOR);
+          leds[RT][i].setRGB(BLINK_COLOR);
         }
       }
       else
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
-          leds[RB][i].setRGB(0, 0, 0);
+          leds[RT][i].setRGB(0, 0, 0);
         }
       }
     }
@@ -198,16 +198,16 @@ void loop()
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
-          leds[LB][i].setRGB(BLINK_COLOR);
-          leds[RB][i].setRGB(BLINK_COLOR);
+          leds[LT][i].setRGB(BLINK_COLOR);
+          leds[RT][i].setRGB(BLINK_COLOR);
         }
       }
       else
       {
         for (uint8_t i = INNER_BLINK_LED; i < OUTER_BLINK_LED; i++)
         {
-          leds[LB][i].setRGB(0, 0, 0);
-          leds[RB][i].setRGB(0, 0, 0);
+          leds[LT][i].setRGB(0, 0, 0);
+          leds[RT][i].setRGB(0, 0, 0);
         }
       }
     }
@@ -246,17 +246,17 @@ void loop()
 
 void breath_leds()
 {
-  static int incrementer = 5;
+  static int incrementer = 2;
   uint32_t cur_breath_time = millis() - command_start_times[3];
-  if (cur_breath_time - last_breath_time >= 100)
+  if (cur_breath_time - last_breath_time >= 15)
   {
     if (dimmed_light[0] <= 10)
     {
-      incrementer = 5;
+      incrementer = 2;
     }
     else if (dimmed_light[0] >= RGBintensity[0])
     {
-      incrementer = -5;
+      incrementer = -2;
     }
 
     dimmed_light[0] += incrementer;
